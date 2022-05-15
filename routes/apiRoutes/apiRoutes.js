@@ -1,34 +1,57 @@
-const router = require('express').Router();
 const fs = require('fs');
-let database = require('../../db/db.json');
+const path = require('path');
+const router = require('express').Router();
+
+const dbFilePath = path.join(__dirname, '../../db/db.json');
+
+var notesArray = [];
 
 router.get('/notes', (req, res) => {
-    database = JSON.parse(fs.readFileSync('./db/db.json', 'UTF-8'))
-    res.json(database)
+
+    res.sendFile(dbFilePath);
+
 });
 
 router.post('/notes', (req, res) => {
-    let noteModel = {
+
+    let newNote = {
         title: req.body.title,
         text: req.body.text,
-        id: Math.floor(Math.random()* 100)
-    }
-    database.push(noteModel)
-    fs.writeFileSync('./db/db.json', JSON.stringify(database))
-    //sends response
-    res.json(database)
+        id: JSON.stringify(notesArray.length)
+    };
+
+    notesArray.push(newNote);
+
+    content = JSON.stringify(notesArray);
+
+    fs.writeFile(dbFilePath, content, function (err) {
+        if (err) throw err;
+        console.log('Saved!');
+    });
+
+    res.json(dbFilePath);
+
 });
 
+
+
 router.delete('/notes/:id', (req, res) => {
-    let keep = []
-    for (var i = 0; i < database.length; i++) {
-        if (database[i].id != req.params.id) {
-            keep.push(database[i])
-        }
-    }
-    database = keep;
-    fs.writeFileSync('./db/db.json', JSON.stringify(database))
-    res.json(database)
+
+    let deleteByID = req.params.id
+
+    let indexToDelete = notesArray.findIndex(o => o.id === deleteByID)
+
+    notesArray.splice(indexToDelete, 1);
+
+    content = JSON.stringify(notesArray);
+
+    fs.writeFile(dbFilePath, content, function (err) {
+        if (err) throw err;
+        console.log('Saved!');
+    });
+
+    res.json(dbFilePath);
+
 });
 
 module.exports = router;
